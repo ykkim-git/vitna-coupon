@@ -1,0 +1,46 @@
+name: Supabase Keepalive
+
+# Supabase 무료 플랜은 1주일간 DB 활동이 없으면 프로젝트를 일시정지한다.
+# 쿠폰북은 몇 주씩 안 열어볼 수 있으므로, 주 2회 가벼운 조회 요청을 보내 깨워둔다.
+#
+# ⚠️ 공개 저장소에서는 60일간 저장소 활동(커밋 등)이 없으면 스케줄 워크플로가
+#    자동으로 비활성화된다. 그때는 Actions 탭에서 다시 켜주면 된다.
+
+on:
+  schedule:
+    # 매주 월요일, 목요일 03:00 UTC = 한국시간 정오 12:00
+    - cron: "0 3 * * 1,4"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Supabase 깨우기
+        env:
+          SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
+            echo "::warning::Supabase 변수가 등록되어 있지 않아 건너뜁니다."
+            echo "Settings > Secrets and variables > Actions > Variables 에"
+            echo "VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY 를 등록하세요."
+            exit 0
+          fi
+
+          # 행 하나만 읽는 가장 가벼운 조회. 실제 DB까지 도달해야 활동으로 잡힌다.
+          code=$(curl -sS -o /tmp/body.txt -w '%{http_code}' \
+            "${SUPABASE_URL}/rest/v1/coupon_usages?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_KEY}")
+
+          echo "HTTP $code"
+
+          if [ "$code" != "200" ]; then
+            echo "::error::Supabase 응답이 정상이 아닙니다 (HTTP $code)."
+            echo "프로젝트가 이미 정지되었거나 키/URL이 바뀌었을 수 있습니다."
+            cat /tmp/body.txt
+            exit 1
+          fi
+
+          echo "✅ Supabase 정상 (프로젝트 활성 상태 유지됨)"
