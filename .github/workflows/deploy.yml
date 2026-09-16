@@ -26,10 +26,11 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          # Supabase 동기화를 쓰려면 저장소 Settings > Secrets and variables > Actions >
-          # Variables 에 아래 두 개를 등록하세요. (anon key는 공개돼도 되는 키입니다)
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          # 저장소 Settings > Secrets and variables > Actions 에 등록하세요.
+          # anon key는 브라우저에 노출되는 공개 키라 Variables 탭이면 충분하지만,
+          # Secrets 탭에 넣어도 동작하도록 양쪽을 모두 본다.
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_BOOK_ID: ${{ vars.VITE_BOOK_ID }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
