@@ -1,0 +1,183 @@
+<script setup>
+import { computed } from 'vue'
+import { isAvailable, isExpired, remainingOf, usedCount } from '../store/couponStore'
+
+const props = defineProps({
+  coupon: { type: Object, required: true },
+})
+defineEmits(['use'])
+
+const available = computed(() => isAvailable(props.coupon))
+const expired = computed(() => isExpired(props.coupon))
+const remaining = computed(() => remainingOf(props.coupon))
+const used = computed(() => usedCount(props.coupon.id))
+const total = computed(() => (props.coupon.unlimited ? null : (props.coupon.limit ?? 1)))
+
+const statusText = computed(() => {
+  if (expired.value) return '기간 만료'
+  if (props.coupon.unlimited) return '무제한'
+  if (remaining.value === 0) return '모두 사용함'
+  return `${remaining.value}회 남음`
+})
+</script>
+
+<template>
+  <article class="card" :class="[`t-${coupon.theme || 'rose'}`, { off: !available }]">
+    <div class="stub">
+      <span class="emoji">{{ coupon.emoji }}</span>
+      <span class="count" v-if="total">{{ used }}/{{ total }}</span>
+      <span class="count" v-else>∞</span>
+    </div>
+
+    <div class="perf" aria-hidden="true"></div>
+
+    <div class="body">
+      <h3 class="title serif">{{ coupon.title }}</h3>
+      <p class="desc">{{ coupon.desc }}</p>
+
+      <div class="foot">
+        <span class="status" :class="{ warn: !available }">{{ statusText }}</span>
+        <button class="use btn" :disabled="!available" @click="$emit('use', coupon)">
+          {{ available ? '사용하기' : '사용완료' }}
+        </button>
+      </div>
+    </div>
+
+    <div v-if="!available" class="stamp serif">{{ expired ? 'EXPIRED' : 'USED' }}</div>
+  </article>
+</template>
+
+<style scoped>
+.card {
+  position: relative;
+  display: flex;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: opacity 0.2s ease;
+}
+.card.off {
+  opacity: 0.62;
+}
+
+.stub {
+  flex: 0 0 82px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(160deg, var(--c1), var(--c2));
+  padding: 18px 8px;
+}
+.emoji {
+  font-size: 30px;
+  line-height: 1;
+}
+.count {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(59, 48, 56, 0.6);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+/* 절취선 */
+.perf {
+  width: 0;
+  border-left: 2px dashed var(--line);
+  margin: 10px 0;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+  padding: 16px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.title {
+  margin: 0;
+  font-size: 16.5px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+.desc {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.foot {
+  margin-top: auto;
+  padding-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.status {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent-deep);
+}
+.status.warn {
+  color: var(--ink-soft);
+}
+.use {
+  padding: 9px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(224, 107, 139, 0.3);
+}
+.use:disabled {
+  background: #ece2e6;
+  color: #b3a3aa;
+  box-shadow: none;
+}
+
+.stamp {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-14deg);
+  border: 3px solid rgba(155, 74, 74, 0.35);
+  color: rgba(155, 74, 74, 0.38);
+  border-radius: 8px;
+  padding: 3px 10px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  pointer-events: none;
+}
+
+.t-rose {
+  --c1: var(--t-rose-1);
+  --c2: var(--t-rose-2);
+}
+.t-peach {
+  --c1: var(--t-peach-1);
+  --c2: var(--t-peach-2);
+}
+.t-lilac {
+  --c1: var(--t-lilac-1);
+  --c2: var(--t-lilac-2);
+}
+.t-mint {
+  --c1: var(--t-mint-1);
+  --c2: var(--t-mint-2);
+}
+.t-sky {
+  --c1: var(--t-sky-1);
+  --c2: var(--t-sky-2);
+}
+.t-gold {
+  --c1: var(--t-gold-1);
+  --c2: var(--t-gold-2);
+}
+</style>
