@@ -2,7 +2,6 @@
 import { computed, ref } from "vue";
 import CouponCard from "../components/CouponCard.vue";
 import ConfirmSheet from "../components/ConfirmSheet.vue";
-import SyncBadge from "../components/SyncBadge.vue";
 import { toast } from "../composables/useToast";
 import { coupons, isAvailable, stats, useCoupon } from "../store/couponStore";
 
@@ -58,8 +57,6 @@ async function confirmUse() {
           >{{ stats.left }}장 남음 · 총 {{ stats.total }}장</span
         >
       </div>
-
-      <SyncBadge />
     </header>
 
     <nav class="filters">
