@@ -71,7 +71,9 @@ const emit = defineEmits(['confirm', 'cancel'])
   font-size: 14.5px;
   font-weight: 600;
   color: var(--accent-deep);
-  line-height: 1.5;
+  line-height: 1.6;
+  /* 스페셜 쿠폰 미션 문구의 줄바꿈(\n)을 그대로 보여준다. */
+  white-space: pre-line;
 }
 .detail {
   margin: 0;

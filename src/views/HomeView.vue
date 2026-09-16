@@ -2,37 +2,131 @@
 import { computed, ref } from "vue";
 import CouponCard from "../components/CouponCard.vue";
 import ConfirmSheet from "../components/ConfirmSheet.vue";
+import PasswordSheet from "../components/PasswordSheet.vue";
 import { toast } from "../composables/useToast";
-import { coupons, isAvailable, stats, useCoupon } from "../store/couponStore";
+import { useAdmin } from "../composables/useAdmin";
+import {
+  cancelUsage,
+  coupons,
+  isUnspent,
+  stats,
+  unlockCoupon,
+  useCoupon,
+} from "../store/couponStore";
+
+const { isAdmin, login, logout } = useAdmin();
 
 const filter = ref("all"); // all | available | used
-const target = ref(null);
 const busy = ref(false);
 
+// 열려 있는 시트 하나만 관리한다. { kind, coupon }
+const sheet = ref(null);
+const passwordOpen = ref(false);
+const passwordSheet = ref(null);
+
 const visible = computed(() => {
-  if (filter.value === "available")
-    return coupons.filter((c) => isAvailable(c));
-  if (filter.value === "used") return coupons.filter((c) => !isAvailable(c));
+  // '사용 가능'에는 아직 안 쓴 쿠폰이 모두 들어간다 (잠긴 스페셜 쿠폰 포함).
+  if (filter.value === "available") return coupons.filter((c) => isUnspent(c));
+  if (filter.value === "used") return coupons.filter((c) => !isUnspent(c));
   return coupons;
 });
 
 function askUse(coupon) {
-  target.value = coupon;
+  sheet.value = { kind: "use", coupon };
 }
 
-async function confirmUse() {
-  const c = target.value;
-  if (!c) return;
+function askUnlock(coupon) {
+  sheet.value = { kind: "unlock", coupon };
+}
+
+function askCancel(coupon) {
+  sheet.value = { kind: "cancel", coupon };
+}
+
+async function confirm() {
+  const s = sheet.value;
+  if (!s) return;
+
+  if (s.kind === "unlock") {
+    unlockCoupon(s.coupon.id);
+    sheet.value = null;
+    toast(`${s.coupon.title} 쿠폰이 열렸어요! 🎉`, "success");
+    return;
+  }
+
   busy.value = true;
-  const usage = await useCoupon(c.id);
-  busy.value = false;
-  target.value = null;
-  if (usage) {
-    toast(`${c.title} 사용 완료! 🎉`, "success");
-  } else {
-    toast("이미 사용한 쿠폰이에요.", "error");
+  if (s.kind === "use") {
+    const usage = await useCoupon(s.coupon.id);
+    busy.value = false;
+    sheet.value = null;
+    toast(
+      usage
+        ? `${s.coupon.title} 사용 완료! 🎉`
+        : "이미 사용한 쿠폰이에요.",
+      usage ? "success" : "error",
+    );
+    return;
+  }
+
+  if (s.kind === "cancel") {
+    const result = await cancelUsage(s.coupon.id);
+    busy.value = false;
+    sheet.value = null;
+    if (result.ok) {
+      toast(`${s.coupon.title} 사용처리를 되돌렸어요.`);
+    } else {
+      toast("되돌리기에 실패했어요. 잠시 후 다시 시도해주세요.", "error");
+    }
   }
 }
+
+function onAdminClick() {
+  if (isAdmin.value) {
+    logout();
+    toast("관리자 모드를 껐어요.");
+  } else {
+    passwordOpen.value = true;
+  }
+}
+
+function onPasswordSubmit(password) {
+  if (login(password)) {
+    passwordOpen.value = false;
+    toast("관리자 모드가 켜졌어요. 🔑");
+  } else {
+    passwordSheet.value?.reject();
+  }
+}
+
+const sheetProps = computed(() => {
+  const s = sheet.value;
+  if (!s) return {};
+  if (s.kind === "unlock") {
+    return {
+      title: "🎁 스페셜 쿠폰",
+      message: s.coupon.unlockMessage,
+      detail: "",
+      confirmText: "확인",
+      cancelText: "나중에",
+    };
+  }
+  if (s.kind === "cancel") {
+    return {
+      title: "사용처리를 되돌릴까요?",
+      message: s.coupon.title,
+      detail: "쿠폰이 다시 사용 가능 상태로 돌아가요.",
+      confirmText: "네, 되돌릴게요",
+      cancelText: "아니요",
+    };
+  }
+  return {
+    title: "정말 사용할까요?",
+    message: s.coupon.title,
+    detail: "한 번 사용하면 되돌릴 수 없어요.",
+    confirmText: "네, 사용할게요",
+    cancelText: "아니요",
+  };
+});
 </script>
 
 <template>
@@ -73,21 +167,43 @@ async function confirmUse() {
       >
         {{ f.label }}
       </button>
+
+      <button
+        class="chip admin"
+        :class="{ on: isAdmin }"
+        :title="isAdmin ? '관리자 모드 끄기' : '관리자 모드'"
+        @click="onAdminClick"
+      >
+        {{ isAdmin ? "🔑" : "🔒" }}
+      </button>
     </nav>
 
     <section class="list">
-      <CouponCard v-for="c in visible" :key="c.id" :coupon="c" @use="askUse" />
+      <CouponCard
+        v-for="c in visible"
+        :key="c.id"
+        :coupon="c"
+        :admin="isAdmin"
+        @use="askUse"
+        @unlock="askUnlock"
+        @cancel="askCancel"
+      />
       <p v-if="!visible.length" class="empty">해당하는 쿠폰이 없어요.</p>
     </section>
 
     <ConfirmSheet
-      :open="!!target"
-      title="정말 사용할까요?"
-      :message="target?.title"
-      detail="한 번 사용하면 되돌릴 수 없어요."
+      :open="!!sheet"
+      v-bind="sheetProps"
       :busy="busy"
-      @confirm="confirmUse"
-      @cancel="target = null"
+      @confirm="confirm"
+      @cancel="sheet = null"
+    />
+
+    <PasswordSheet
+      ref="passwordSheet"
+      :open="passwordOpen"
+      @submit="onPasswordSubmit"
+      @cancel="passwordOpen = false"
     />
   </main>
 </template>
@@ -158,6 +274,16 @@ async function confirmUse() {
 }
 .chip.on {
   background: var(--ink);
+  color: #fff;
+}
+.chip.admin {
+  margin-left: auto;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1;
+}
+.chip.admin.on {
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
   color: #fff;
 }
 

@@ -16,8 +16,8 @@ create index if not exists coupon_usages_book_idx
 -- 실시간 구독(다른 폰에서 쓰면 즉시 반영)을 위해 publication에 추가
 alter publication supabase_realtime add table public.coupon_usages;
 
--- RLS: 이 쿠폰북은 우리 둘만 쓰는 비공개 링크라서 anon에게 읽기/쓰기를 허용한다.
--- 사용 취소 기능이 없으므로 delete 권한은 주지 않는다 (실수로 지워지지 않게).
+-- RLS: 이 쿠폰북은 우리 둘만 쓰는 비공개 링크라서 anon에게 전부 허용한다.
+-- delete는 관리자 모드의 '되돌리기'에서 쓴다.
 alter table public.coupon_usages enable row level security;
 
 drop policy if exists "anon can read"   on public.coupon_usages;
@@ -28,3 +28,4 @@ drop policy if exists "anon can delete" on public.coupon_usages;
 create policy "anon can read"   on public.coupon_usages for select using (true);
 create policy "anon can insert" on public.coupon_usages for insert with check (true);
 create policy "anon can update" on public.coupon_usages for update using (true) with check (true);
+create policy "anon can delete" on public.coupon_usages for delete using (true);

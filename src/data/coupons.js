@@ -8,6 +8,8 @@
  * emoji   : 카드에 크게 보이는 아이콘
  * theme   : 'rose' | 'peach' | 'lilac' | 'mint' | 'sky' | 'gold'
  * expires : 'YYYY-MM-DD' 유효기간 (없으면 무기한)
+ * special : true 면 잠긴 스페셜 쿠폰. unlockMessage의 미션을 완료해야 열린다.
+ * unlockMessage : 스페셜 쿠폰을 눌렀을 때 보여줄 미션 문구
  */
 export const coupons = [
   {
@@ -51,6 +53,9 @@ export const coupons = [
     desc: "30만원 상당. 묻지도 따지지도 않는다!.",
     emoji: "✨",
     theme: "gold",
+    special: true,
+    unlockMessage:
+      "남편에게 뽀뽀 10번을 하면 열립니다.\n완료하셨으면 확인 버튼을 눌러 쿠폰을 열어보세요.",
   },
 ];
 

@@ -44,6 +44,13 @@ export async function pushUsages(usages) {
   if (error) throw error
 }
 
+/** 사용 기록을 원격에서 지운다. 관리자 모드의 되돌리기에서만 쓴다. */
+export async function deleteUsages(ids) {
+  if (!ids.length) return
+  const { error } = await supabase.from(TABLE).delete().in('id', ids)
+  if (error) throw error
+}
+
 /**
  * 실시간 구독. 다른 폰에서 사용처리하면 바로 콜백이 불린다.
  * @returns {() => void} 구독 해제 함수

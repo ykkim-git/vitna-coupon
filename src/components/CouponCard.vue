@@ -1,43 +1,70 @@
 <script setup>
 import { computed } from 'vue'
-import { isAvailable, isExpired } from '../store/couponStore'
+import { isAvailable, isExpired, isLocked, isUsed } from '../store/couponStore'
 
 const props = defineProps({
   coupon: { type: Object, required: true },
+  admin: { type: Boolean, default: false },
 })
-defineEmits(['use'])
+defineEmits(['use', 'unlock', 'cancel'])
 
 const available = computed(() => isAvailable(props.coupon))
 const expired = computed(() => isExpired(props.coupon))
+const locked = computed(() => isLocked(props.coupon))
+const used = computed(() => isUsed(props.coupon.id))
 
-// 사용한 쿠폰은 USED 도장과 비활성 버튼이 이미 말해주므로 상태 문구를 비운다.
+// 관리자 모드에서는 되돌리기 버튼이 도장 자리를 차지하므로,
+// 도장을 감추는 대신 왼쪽에 문구로 상태를 보여준다.
+const showStamp = computed(() => (used.value || expired.value) && !(props.admin && used.value))
+
 const statusText = computed(() => {
   if (expired.value) return '기간 만료'
-  return available.value ? '사용 가능' : ''
+  if (used.value) return props.admin ? '사용 완료' : ''
+  if (locked.value) return '🔒 잠긴 쿠폰'
+  return '사용 가능'
 })
+
+// 잠겨 있는 동안에는 쿠폰 이름도 가린다.
+const displayTitle = computed(() => (locked.value ? '스페셜 쿠폰' : props.coupon.title))
 </script>
 
 <template>
-  <article class="card" :class="[`t-${coupon.theme || 'rose'}`, { off: !available }]">
+  <article
+    class="card"
+    :class="[`t-${coupon.theme || 'rose'}`, { off: used || expired, locked }]"
+  >
     <div class="stub">
-      <span class="emoji">{{ coupon.emoji }}</span>
+      <span class="emoji">{{ locked ? '🎁' : coupon.emoji }}</span>
     </div>
 
     <div class="perf" aria-hidden="true"></div>
 
     <div class="body">
-      <h3 class="title serif">{{ coupon.title }}</h3>
-      <p class="desc">{{ coupon.desc }}</p>
+      <!-- 잠긴 스페셜 쿠폰은 이름과 내용을 모두 가려둔다. 미션을 완료해야 열린다. -->
+      <h3 class="title serif">{{ displayTitle }}</h3>
+      <p v-if="locked" class="desc teaser">미션을 완료하면 열리는 쿠폰이에요.</p>
+      <p v-else class="desc">{{ coupon.desc }}</p>
 
       <div class="foot">
-        <span v-if="statusText" class="status" :class="{ warn: !available }">{{ statusText }}</span>
+        <span v-if="statusText" class="status" :class="{ warn: used || expired }">
+          {{ statusText }}
+        </span>
         <span v-else></span>
-        <!-- 사용한 쿠폰은 누를 것이 없다. USED 도장이 자리를 대신한다. -->
-        <button v-if="available" class="use btn" @click="$emit('use', coupon)">사용하기</button>
+
+        <button v-if="locked" class="use btn open" @click="$emit('unlock', coupon)">
+          열어보기
+        </button>
+        <button v-else-if="available" class="use btn" @click="$emit('use', coupon)">
+          사용하기
+        </button>
+        <!-- 관리자 모드에서만 되돌리기가 보인다. -->
+        <button v-else-if="admin && used" class="undo btn" @click="$emit('cancel', coupon)">
+          되돌리기
+        </button>
       </div>
     </div>
 
-    <div v-if="!available" class="stamp serif">{{ expired ? 'EXPIRED' : 'USED' }}</div>
+    <div v-if="showStamp" class="stamp serif">{{ expired ? 'EXPIRED' : 'USED' }}</div>
   </article>
 </template>
 
@@ -54,6 +81,9 @@ const statusText = computed(() => {
 .card.off {
   opacity: 0.62;
 }
+.card.locked {
+  box-shadow: 0 6px 22px rgba(214, 170, 60, 0.28);
+}
 
 .stub {
   flex: 0 0 82px;
@@ -66,6 +96,14 @@ const statusText = computed(() => {
 .emoji {
   font-size: 32px;
   line-height: 1;
+}
+.card.locked .emoji {
+  animation: bob 2.4s ease-in-out infinite;
+}
+@keyframes bob {
+  50% {
+    transform: translateY(-4px) rotate(-6deg);
+  }
 }
 
 /* 절취선 */
@@ -97,6 +135,9 @@ const statusText = computed(() => {
   /* desc에 넣은 줄바꿈(\n)을 그대로 보여준다. */
   white-space: pre-line;
 }
+.desc.teaser {
+  font-style: italic;
+}
 .foot {
   margin-top: auto;
   padding-top: 10px;
@@ -122,10 +163,18 @@ const statusText = computed(() => {
   color: #fff;
   box-shadow: 0 3px 10px rgba(224, 107, 139, 0.3);
 }
-.use:disabled {
-  background: #ece2e6;
-  color: #b3a3aa;
-  box-shadow: none;
+.use.open {
+  background: linear-gradient(135deg, #e8bf5d, #c99a2c);
+  box-shadow: 0 3px 10px rgba(201, 154, 44, 0.35);
+}
+.undo {
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  background: #f5eef1;
+  color: var(--ink-soft);
+  position: relative;
+  z-index: 1;
 }
 
 .stamp {
