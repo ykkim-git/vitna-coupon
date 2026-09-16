@@ -1,42 +1,42 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue'
-import QRCode from 'qrcode'
-import { toast } from '../composables/useToast'
+import { onMounted, ref, watch } from "vue";
+import QRCode from "qrcode";
+import { toast } from "../composables/useToast";
 
 // 해시(#/qr)를 뺀 사이트 기본 주소. 이걸 QR로 만든다.
-const siteUrl = ref(window.location.href.split('#')[0])
-const dataUrl = ref('')
+const siteUrl = ref(window.location.href.split("#")[0]);
+const dataUrl = ref("");
 
 async function render() {
   try {
     dataUrl.value = await QRCode.toDataURL(siteUrl.value, {
       width: 640,
       margin: 2,
-      color: { dark: '#3b3038', light: '#ffffff' },
-      errorCorrectionLevel: 'M',
-    })
+      color: { dark: "#3b3038", light: "#ffffff" },
+      errorCorrectionLevel: "M",
+    });
   } catch {
-    toast('QR 코드를 만들지 못했어요.', 'error')
+    toast("QR 코드를 만들지 못했어요.", "error");
   }
 }
 
-onMounted(render)
-watch(siteUrl, render)
+onMounted(render);
+watch(siteUrl, render);
 
 async function copy() {
   try {
-    await navigator.clipboard.writeText(siteUrl.value)
-    toast('주소를 복사했어요.')
+    await navigator.clipboard.writeText(siteUrl.value);
+    toast("주소를 복사했어요.");
   } catch {
-    toast('복사에 실패했어요. 주소를 길게 눌러 복사해주세요.', 'error')
+    toast("복사에 실패했어요. 주소를 길게 눌러 복사해주세요.", "error");
   }
 }
 
 function download() {
-  const a = document.createElement('a')
-  a.href = dataUrl.value
-  a.download = 'coupon-book-qr.png'
-  a.click()
+  const a = document.createElement("a");
+  a.href = dataUrl.value;
+  a.download = "coupon-book-qr.png";
+  a.click();
 }
 </script>
 
@@ -44,7 +44,6 @@ function download() {
   <main class="page">
     <header class="head">
       <h1 class="serif">쿠폰북 QR</h1>
-      <p class="sub">이 QR을 찍으면 쿠폰북이 열려요.<br />인쇄해서 카드에 붙여주세요 💌</p>
     </header>
 
     <div class="qr-card">
@@ -59,14 +58,6 @@ function download() {
         QR 이미지 저장
       </button>
     </div>
-
-    <details class="tip">
-      <summary>다른 주소로 QR을 만들고 싶다면</summary>
-      <input v-model="siteUrl" class="input" placeholder="https://..." />
-      <p class="tip-text">
-        배포 전에 미리 QR을 뽑고 싶다면 최종 배포 주소를 여기에 붙여넣으세요.
-      </p>
-    </details>
   </main>
 </template>
 

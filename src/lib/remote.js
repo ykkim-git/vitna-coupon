@@ -12,6 +12,14 @@ export const supabase = isRemoteEnabled ? createClient(url, anonKey) : null
 
 const TABLE = 'coupon_usages'
 
+/**
+ * 사용 기록의 기본키. 쿠폰 하나당 한 행뿐이므로
+ * 두 폰이 동시에 눌러도 upsert가 같은 행으로 합쳐진다 = 중복 사용 불가.
+ */
+export function usageId(couponId) {
+  return `${BOOK_ID}:${couponId}`
+}
+
 /** 원격에 저장된 모든 사용 기록을 가져온다. */
 export async function fetchUsages() {
   const { data, error } = await supabase
@@ -33,13 +41,6 @@ export async function pushUsages(usages) {
     used_by: u.usedBy ?? null,
   }))
   const { error } = await supabase.from(TABLE).upsert(rows, { onConflict: 'id' })
-  if (error) throw error
-}
-
-/** 사용 취소된 기록을 원격에서 지운다. */
-export async function deleteUsages(ids) {
-  if (!ids.length) return
-  const { error } = await supabase.from(TABLE).delete().in('id', ids)
   if (error) throw error
 }
 

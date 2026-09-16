@@ -3,7 +3,6 @@ import { RouterLink } from 'vue-router'
 
 const tabs = [
   { to: '/', icon: '🎟️', label: '쿠폰' },
-  { to: '/history', icon: '📜', label: '사용내역' },
   { to: '/qr', icon: '📱', label: 'QR' },
 ]
 </script>

@@ -4,13 +4,7 @@ import CouponCard from '../components/CouponCard.vue'
 import ConfirmSheet from '../components/ConfirmSheet.vue'
 import SyncBadge from '../components/SyncBadge.vue'
 import { toast } from '../composables/useToast'
-import {
-  coupons,
-  isAvailable,
-  remainingOf,
-  stats,
-  useCoupon,
-} from '../store/couponStore'
+import { coupons, isAvailable, stats, useCoupon } from '../store/couponStore'
 
 const filter = ref('all') // all | available | used
 const target = ref(null)
@@ -20,16 +14,6 @@ const visible = computed(() => {
   if (filter.value === 'available') return coupons.filter((c) => isAvailable(c))
   if (filter.value === 'used') return coupons.filter((c) => !isAvailable(c))
   return coupons
-})
-
-const confirmDetail = computed(() => {
-  const c = target.value
-  if (!c) return ''
-  if (c.unlimited) return '이 쿠폰은 횟수 제한이 없어요.'
-  const left = remainingOf(c) - 1
-  return left > 0
-    ? `사용하면 ${left}회 남아요.`
-    : '이 쿠폰의 마지막 한 장이에요. 사용하면 되돌릴 수 없어요.'
 })
 
 function askUse(coupon) {
@@ -46,7 +30,7 @@ async function confirmUse() {
   if (usage) {
     toast(`${c.title} 사용 완료! 🎉`, 'success')
   } else {
-    toast('이미 다 사용한 쿠폰이에요.', 'error')
+    toast('이미 사용한 쿠폰이에요.', 'error')
   }
 }
 </script>
@@ -96,7 +80,7 @@ async function confirmUse() {
       :open="!!target"
       title="정말 사용할까요?"
       :message="target?.title"
-      :detail="confirmDetail"
+      detail="한 번 사용하면 되돌릴 수 없어요."
       :busy="busy"
       @confirm="confirmUse"
       @cancel="target = null"

@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { isAvailable, isExpired, remainingOf, usedCount } from '../store/couponStore'
+import { isAvailable, isExpired } from '../store/couponStore'
 
 const props = defineProps({
   coupon: { type: Object, required: true },
@@ -9,15 +9,11 @@ defineEmits(['use'])
 
 const available = computed(() => isAvailable(props.coupon))
 const expired = computed(() => isExpired(props.coupon))
-const remaining = computed(() => remainingOf(props.coupon))
-const used = computed(() => usedCount(props.coupon.id))
-const total = computed(() => (props.coupon.unlimited ? null : (props.coupon.limit ?? 1)))
 
+// 사용한 쿠폰은 USED 도장과 비활성 버튼이 이미 말해주므로 상태 문구를 비운다.
 const statusText = computed(() => {
   if (expired.value) return '기간 만료'
-  if (props.coupon.unlimited) return '무제한'
-  if (remaining.value === 0) return '모두 사용함'
-  return `${remaining.value}회 남음`
+  return available.value ? '사용 가능' : ''
 })
 </script>
 
@@ -25,8 +21,6 @@ const statusText = computed(() => {
   <article class="card" :class="[`t-${coupon.theme || 'rose'}`, { off: !available }]">
     <div class="stub">
       <span class="emoji">{{ coupon.emoji }}</span>
-      <span class="count" v-if="total">{{ used }}/{{ total }}</span>
-      <span class="count" v-else>∞</span>
     </div>
 
     <div class="perf" aria-hidden="true"></div>
@@ -36,10 +30,10 @@ const statusText = computed(() => {
       <p class="desc">{{ coupon.desc }}</p>
 
       <div class="foot">
-        <span class="status" :class="{ warn: !available }">{{ statusText }}</span>
-        <button class="use btn" :disabled="!available" @click="$emit('use', coupon)">
-          {{ available ? '사용하기' : '사용완료' }}
-        </button>
+        <span v-if="statusText" class="status" :class="{ warn: !available }">{{ statusText }}</span>
+        <span v-else></span>
+        <!-- 사용한 쿠폰은 누를 것이 없다. USED 도장이 자리를 대신한다. -->
+        <button v-if="available" class="use btn" @click="$emit('use', coupon)">사용하기</button>
       </div>
     </div>
 
@@ -64,24 +58,14 @@ const statusText = computed(() => {
 .stub {
   flex: 0 0 82px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
   background: linear-gradient(160deg, var(--c1), var(--c2));
   padding: 18px 8px;
 }
 .emoji {
-  font-size: 30px;
+  font-size: 32px;
   line-height: 1;
-}
-.count {
-  font-size: 11px;
-  font-weight: 700;
-  color: rgba(59, 48, 56, 0.6);
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 999px;
-  padding: 2px 8px;
 }
 
 /* 절취선 */
@@ -114,6 +98,7 @@ const statusText = computed(() => {
 .foot {
   margin-top: auto;
   padding-top: 10px;
+  min-height: 34px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -144,8 +129,8 @@ const statusText = computed(() => {
 .stamp {
   position: absolute;
   right: 14px;
-  top: 50%;
-  transform: translateY(-50%) rotate(-14deg);
+  bottom: 14px;
+  transform: rotate(-9deg);
   border: 3px solid rgba(155, 74, 74, 0.35);
   color: rgba(155, 74, 74, 0.38);
   border-radius: 8px;
