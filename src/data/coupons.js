@@ -43,7 +43,7 @@ export const coupons = [
   {
     id: "half-day-out",
     title: "반나절 외출 쿠폰",
-    desc: `반나절 동안 자유. 어디서 뭘 하든 연락 안 합니다. \n 기준 (리호 아침밥 ~ 리호 저녁밥)`,
+    desc: `반나절 동안 자유 부인을 즐기세요.\n 기준 (리호 아침밥 ~ 리호 저녁밥)`,
     emoji: "🚪",
     theme: "sky",
   },
