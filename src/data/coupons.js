@@ -14,7 +14,7 @@
 export const coupons = [
   {
     id: "trip-1n2d",
-    title: "1박 2일",
+    title: "1박 2일 쿠폰",
     desc: "가고 싶은 곳으로 떠나는 1박 2일. 일정도 숙소도 빛나 마음대로.",
     emoji: "🧳",
     theme: "rose",
@@ -28,15 +28,15 @@ export const coupons = [
   },
   {
     id: "no-chores",
-    title: "집안일 하기싫어",
+    title: "집안일 하기싫어 쿠폰",
     desc: "설거지·빨래·청소 전부 맡겨주세요!",
     emoji: "🧹",
     theme: "mint",
   },
   {
     id: "private-chef",
-    title: "나만의 쉐프",
-    desc: "우리 가족의 식사를 항상 챙겨준 당신, 오늘 만큼은 아빠에게 맡겨주세요.",
+    title: "나만의 쉐프 쿠폰",
+    desc: "우리 가족의 식사를 항상 챙겨준 당신! \n 오늘 만큼은 아빠에게 맡겨주세요.",
     emoji: "👨‍🍳",
     theme: "peach",
   },
@@ -49,8 +49,8 @@ export const coupons = [
   },
   {
     id: "skin-care",
-    title: "피부미용권",
-    desc: "30만원 상당. 묻지도 따지지도 않는다!.",
+    title: "피부미용 쿠폰",
+    desc: "50만원 상당 피부과에서 관리받고 오세요. \n (단, 50만원 초과 금액은 본인 부담 및 재정 악화 시 금액은 유동적으로 조정될 수 있음.)",
     emoji: "✨",
     theme: "gold",
     special: true,
