@@ -1,36 +1,37 @@
 <script setup>
-import { computed, ref } from 'vue'
-import CouponCard from '../components/CouponCard.vue'
-import ConfirmSheet from '../components/ConfirmSheet.vue'
-import SyncBadge from '../components/SyncBadge.vue'
-import { toast } from '../composables/useToast'
-import { coupons, isAvailable, stats, useCoupon } from '../store/couponStore'
+import { computed, ref } from "vue";
+import CouponCard from "../components/CouponCard.vue";
+import ConfirmSheet from "../components/ConfirmSheet.vue";
+import SyncBadge from "../components/SyncBadge.vue";
+import { toast } from "../composables/useToast";
+import { coupons, isAvailable, stats, useCoupon } from "../store/couponStore";
 
-const filter = ref('all') // all | available | used
-const target = ref(null)
-const busy = ref(false)
+const filter = ref("all"); // all | available | used
+const target = ref(null);
+const busy = ref(false);
 
 const visible = computed(() => {
-  if (filter.value === 'available') return coupons.filter((c) => isAvailable(c))
-  if (filter.value === 'used') return coupons.filter((c) => !isAvailable(c))
-  return coupons
-})
+  if (filter.value === "available")
+    return coupons.filter((c) => isAvailable(c));
+  if (filter.value === "used") return coupons.filter((c) => !isAvailable(c));
+  return coupons;
+});
 
 function askUse(coupon) {
-  target.value = coupon
+  target.value = coupon;
 }
 
 async function confirmUse() {
-  const c = target.value
-  if (!c) return
-  busy.value = true
-  const usage = await useCoupon(c.id)
-  busy.value = false
-  target.value = null
+  const c = target.value;
+  if (!c) return;
+  busy.value = true;
+  const usage = await useCoupon(c.id);
+  busy.value = false;
+  target.value = null;
   if (usage) {
-    toast(`${c.title} 사용 완료! 🎉`, 'success')
+    toast(`${c.title} 사용 완료! 🎉`, "success");
   } else {
-    toast('이미 사용한 쿠폰이에요.', 'error')
+    toast("이미 사용한 쿠폰이에요.", "error");
   }
 }
 </script>
@@ -39,17 +40,23 @@ async function confirmUse() {
   <main class="page">
     <header class="hero">
       <p class="eyebrow">FOR MY LOVE</p>
-      <h1 class="serif">우리 쿠폰북</h1>
-      <p class="sub">언제든 꺼내 쓰세요. 거절권은 없습니다 :)</p>
+      <h1 class="serif">빛나의 쿠폰북</h1>
+      <p class="sub">2026년 09월 17일 생일을 축하합니다!</p>
 
       <div class="gauge">
         <div class="bar">
           <div
             class="fill"
-            :style="{ width: stats.total ? (stats.used / stats.total) * 100 + '%' : '0%' }"
+            :style="{
+              width: stats.total
+                ? (stats.used / stats.total) * 100 + '%'
+                : '0%',
+            }"
           ></div>
         </div>
-        <span class="gauge-text">{{ stats.left }}장 남음 · 총 {{ stats.total }}장</span>
+        <span class="gauge-text"
+          >{{ stats.left }}장 남음 · 총 {{ stats.total }}장</span
+        >
       </div>
 
       <SyncBadge />

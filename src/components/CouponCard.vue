@@ -94,6 +94,8 @@ const statusText = computed(() => {
   font-size: 12.5px;
   line-height: 1.55;
   color: var(--ink-soft);
+  /* desc에 넣은 줄바꿈(\n)을 그대로 보여준다. */
+  white-space: pre-line;
 }
 .foot {
   margin-top: auto;
