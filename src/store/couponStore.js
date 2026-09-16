@@ -162,6 +162,12 @@ export function unlockCoupon(couponId) {
   saveLocal()
 }
 
+/** 스페셜 쿠폰을 다시 잠근다. 관리자 모드 전용 (테스트 후 되돌리기용). */
+export function relockCoupon(couponId) {
+  state.unlocked = state.unlocked.filter((id) => id !== couponId)
+  saveLocal()
+}
+
 /** 쿠폰 사용 처리. 관리자 모드가 아니면 되돌릴 수 없다. */
 export async function useCoupon(couponId) {
   const coupon = couponMap[couponId]

@@ -9,6 +9,7 @@ import {
   cancelUsage,
   coupons,
   isUnspent,
+  relockCoupon,
   stats,
   unlockCoupon,
   useCoupon,
@@ -41,6 +42,12 @@ function askUnlock(coupon) {
 
 function askCancel(coupon) {
   sheet.value = { kind: "cancel", coupon };
+}
+
+// 되돌리기 쉬운 동작이라 확인 시트 없이 바로 처리한다.
+function onRelock(coupon) {
+  relockCoupon(coupon.id);
+  toast("스페셜 쿠폰을 다시 잠갔어요. 🔒");
 }
 
 async function confirm() {
@@ -187,6 +194,7 @@ const sheetProps = computed(() => {
         @use="askUse"
         @unlock="askUnlock"
         @cancel="askCancel"
+        @relock="onRelock"
       />
       <p v-if="!visible.length" class="empty">해당하는 쿠폰이 없어요.</p>
     </section>

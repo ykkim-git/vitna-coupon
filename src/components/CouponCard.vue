@@ -6,7 +6,7 @@ const props = defineProps({
   coupon: { type: Object, required: true },
   admin: { type: Boolean, default: false },
 })
-defineEmits(['use', 'unlock', 'cancel'])
+defineEmits(['use', 'unlock', 'cancel', 'relock'])
 
 const available = computed(() => isAvailable(props.coupon))
 const expired = computed(() => isExpired(props.coupon))
@@ -51,16 +51,27 @@ const displayTitle = computed(() => (locked.value ? '스페셜 쿠폰' : props.c
         </span>
         <span v-else></span>
 
-        <button v-if="locked" class="use btn open" @click="$emit('unlock', coupon)">
-          열어보기
-        </button>
-        <button v-else-if="available" class="use btn" @click="$emit('use', coupon)">
-          사용하기
-        </button>
-        <!-- 관리자 모드에서만 되돌리기가 보인다. -->
-        <button v-else-if="admin && used" class="undo btn" @click="$emit('cancel', coupon)">
-          되돌리기
-        </button>
+        <div class="actions">
+          <!-- 관리자 모드에서 열어본 스페셜 쿠폰을 다시 잠글 수 있다 (테스트용). -->
+          <button
+            v-if="admin && coupon.special && !locked && !used"
+            class="mini btn"
+            @click="$emit('relock', coupon)"
+          >
+            잠그기
+          </button>
+
+          <button v-if="locked" class="use btn open" @click="$emit('unlock', coupon)">
+            열어보기
+          </button>
+          <button v-else-if="available" class="use btn" @click="$emit('use', coupon)">
+            사용하기
+          </button>
+          <!-- 관리자 모드에서만 되돌리기가 보인다. -->
+          <button v-else-if="admin && used" class="undo btn" @click="$emit('cancel', coupon)">
+            되돌리기
+          </button>
+        </div>
       </div>
     </div>
 
@@ -166,6 +177,18 @@ const displayTitle = computed(() => (locked.value ? '스페셜 쿠폰' : props.c
 .use.open {
   background: linear-gradient(135deg, #e8bf5d, #c99a2c);
   box-shadow: 0 3px 10px rgba(201, 154, 44, 0.35);
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.mini {
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: #f1ebee;
+  color: var(--ink-soft);
 }
 .undo {
   padding: 8px 14px;
